@@ -1,7 +1,5 @@
 #import "OpenGLView.h"
 
-#include <stdio.h>
-
 @implementation OpenGLView
 
 - (id)initWithFrame:(NSRect)frame
@@ -40,109 +38,109 @@
 
     [pf release];
     [context release];
+
+    CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
+    CVDisplayLinkSetOutputCallback(displayLink, &displayLinkCallback, (__bridge void*)self);
+    CGLContextObj cglContext = [[self openGLContext] CGLContextObj];
+    CGLPixelFormatObj cglPixelFormat = [[self pixelFormat] CGLPixelFormatObj];
+    CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink, cglContext, cglPixelFormat);
+    CVDisplayLinkStart(displayLink);
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowWillClose:)
+                                                 name:NSWindowWillCloseNotification
+                                               object:[self window]];
+}
+
+- (void) windowWillClose:(NSNotification*)notification
+{    
+    CVDisplayLinkStop(displayLink);
+}
+
+- (CVReturn) getFrameForTime:(const CVTimeStamp*)outputTime
+{
+    // There is no autorelease pool when this method is called
+    // because it will be called from a background thread.
+    // It's important to create one or app can leak objects.
+    @autoreleasepool {
+        [self drawView];
+    }
+    return kCVReturnSuccess;
+}
+
+static CVReturn displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const CVTimeStamp* outputTime, CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext)
+{
+    CVReturn result = [(__bridge OpenGLView*)displayLinkContext getFrameForTime:outputTime];
+    return result;
 }
 
 - (void)prepareOpenGL
 {
-    GLint vsync = 1;
-    CGLContextObj cglContext = [[self openGLContext] CGLContextObj];
-    CGLPixelFormatObj cglPixelFormat = [[self pixelFormat] CGLPixelFormatObj];
+    [super prepareOpenGL];
 
-    [[self openGLContext] setValues:&vsync forParameter:NSOpenGLCPSwapInterval];
-    CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
-    CVDisplayLinkSetOutputCallback(displayLink, &displayLinkCallback, self);
-    CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink, cglContext, cglPixelFormat);
+    [[self openGLContext] makeCurrentContext];
+    GLint swapInt = 1;
+    [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
 
-    //initialize_opengl(cglContext);
-
-    CVDisplayLinkStart(displayLink);
+    // init rendererer here.
 }
 
-- (CGLContextObj)willStartDrawing
+- (void) drawView
 {
-    CGLContextObj cgl_ctx = [[self openGLContext] CGLContextObj];
-    CGLSetCurrentContext(cgl_ctx);
-    CGLLockContext(cgl_ctx);
-    return cgl_ctx;
-}
+    [[self openGLContext] makeCurrentContext];
 
-- (void)didFinishDrawing: (CGLContextObj) cgl_ctx;
-{
-    CGLUnlockContext(cgl_ctx);
-}
+    CGLLockContext([[self openGLContext] CGLContextObj]);
 
-- (CVReturn) render
-{
-    CGLContextObj cgl_ctx = [self willStartDrawing];
-    //render(cgl_ctx);
     glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    printf("%s\n", glGetString(GL_VERSION));
-
-    CGLFlushDrawable(cgl_ctx);
-    
-    [self didFinishDrawing:cgl_ctx];
-
-    return kCVReturnSuccess;
+    CGLFlushDrawable([[self openGLContext] CGLContextObj]);
+    CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
 - (void)reshape
 {
-    CGLContextObj cgl_ctx = [self willStartDrawing];
     [super reshape];
-    //reshape(cgl_ctx, [self bounds].size.width, [self bounds].size.height);
-    [self didFinishDrawing:cgl_ctx];
-}
 
-- (void)update
-{
-    CGLContextObj cgl_ctx = [self willStartDrawing];
-    [super update];
-    [self didFinishDrawing:cgl_ctx];
+    CGLLockContext([[self openGLContext] CGLContextObj]);
+
+    // resize renderer here.
+
+    CGLUnlockContext([[self openGLContext] CGLContextObj]);
 }
 
 - (void)dealloc
 {
+    CVDisplayLinkStop(displayLink);
+
     CVDisplayLinkRelease(displayLink);
-    //uninitialize_opengl([[self openGLContext] CGLContextObj]);
+
     [super dealloc];
 }
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-	[super drawRect:dirtyRect];
-	
-    [self render];
-}
-
-static CVReturn displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const CVTimeStamp* outputTime, CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext)
-{
-    float time = ((float)outputTime->videoTime)/((float)outputTime->videoTimeScale);
-    //setElapsedTime(time);
-
-    [(OpenGLView*)displayLinkContext render];
-    return kCVReturnSuccess;
+    [self drawView];
 }
 
 - (BOOL)acceptsFirstResponder
 {
-	return YES;
+    return YES;
 }
 
 - (void)mouseDown:(NSEvent *)anEvent
 {
-	puts("mousedown!");
+    puts("mousedown!");
 }
 
 - (void)mouseDragged:(NSEvent *)anEvent
 {
-	puts("mousemoved!");
+    puts("mousemoved!");
 }
 
 - (void)keyDown:(NSEvent *)anEvent
 {
-	puts("keydown!");
+    puts("keydown!");
 }
 
 @end

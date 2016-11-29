@@ -1,9 +1,9 @@
 #import <Cocoa/Cocoa.h>
-#import <OpenGL/OpenGL.h>
+#import <MetalKit/MTKView.h>
 #import <QuartzCore/QuartzCore.h>
-#include <OpenGL/gl3.h>
 
-@interface OpenGLView : NSOpenGLView
+
+@interface MetalView : MTKView
 {
     CVDisplayLinkRef displayLink;
 }
