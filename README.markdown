@@ -1,6 +1,6 @@
 # Nibless Cocoa
 
-A combination of several blog posts / other sites to create a functional Nibless Cocoa App  and Nibless Cocoa GL App in OSX 10.9. 
+A combination of several blog posts / other sites to create a functional Nibless Cocoa App  and Nibless Cocoa GL App in macOS Sierra 10.12.
 
 # Usage
 Just type ```make``` inside either directory.

@@ -40,6 +40,10 @@
 
     [pf release];
     [context release];
+
+    CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
+    CVDisplayLinkSetOutputCallback(displayLink, &displayLinkCallback, self);
+    CVDisplayLinkStart(displayLink);
 }
 
 - (void)prepareOpenGL
@@ -49,13 +53,9 @@
     CGLPixelFormatObj cglPixelFormat = [[self pixelFormat] CGLPixelFormatObj];
 
     [[self openGLContext] setValues:&vsync forParameter:NSOpenGLCPSwapInterval];
-    CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
-    CVDisplayLinkSetOutputCallback(displayLink, &displayLinkCallback, self);
     CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink, cglContext, cglPixelFormat);
 
     //initialize_opengl(cglContext);
-
-    CVDisplayLinkStart(displayLink);
 }
 
 - (CGLContextObj)willStartDrawing
@@ -81,7 +81,7 @@
     printf("%s\n", glGetString(GL_VERSION));
 
     CGLFlushDrawable(cgl_ctx);
-    
+
     [self didFinishDrawing:cgl_ctx];
 
     return kCVReturnSuccess;
@@ -112,7 +112,7 @@
 - (void)drawRect:(NSRect)dirtyRect
 {
 	[super drawRect:dirtyRect];
-	
+
     [self render];
 }
 
