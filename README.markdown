@@ -1,9 +1,9 @@
 # Nibless Cocoa
 
-A combination of several blog posts / other sites to create a functional Nibless Cocoa App  and Nibless Cocoa GL App in OSX 10.9. 
+A combination of several blog posts / other sites to create a functional Nibless Cocoa App, a Nibless Cocoa OpenGL App and a Nibless Cocoa Metal App in macOS Sierra 10.12.
 
 # Usage
-Just type ```make``` inside either directory.
+Just type ```make``` inside any of the directories.
 
 # References
 - https://github.com/glfw/glfw-legacy/blob/master/examples/Makefile.cocoa

@@ -13,7 +13,7 @@
 		window = [[NSWindow alloc] initWithContentRect:contentSize styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:YES];
 
 		// allocate view
-		view = [[OpenGLView alloc] initWithFrame:contentSize];
+		view = [[MetalView alloc] initWithFrame:contentSize];
 		[view awakeFromNib];
 	}
 	return self;
