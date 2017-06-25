@@ -25,7 +25,7 @@
 {
     CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
     CVDisplayLinkSetOutputCallback(displayLink, &displayLinkCallback, (__bridge void*)self);
-    CVDisplayLinkSetCurrentCGDisplay(displayLink, 0); // TODO Pass correct display id.
+    CVDisplayLinkSetCurrentCGDisplay(displayLink, CGMainDisplayID());
     CVDisplayLinkStart(displayLink);
 
     [[NSNotificationCenter defaultCenter] addObserver:self
