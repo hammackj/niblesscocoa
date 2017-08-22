@@ -23,11 +23,6 @@
 
 - (void)awakeFromNib
 {
-    CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
-    CVDisplayLinkSetOutputCallback(displayLink, &displayLinkCallback, (__bridge void*)self);
-    CVDisplayLinkSetCurrentCGDisplay(displayLink, CGMainDisplayID());
-    CVDisplayLinkStart(displayLink);
-
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(windowWillClose:)
                                                  name:NSWindowWillCloseNotification
@@ -36,37 +31,32 @@
 
 - (void) windowWillClose:(NSNotification*)notification
 {    
-    CVDisplayLinkStop(displayLink);
-}
-
-- (CVReturn) getFrameForTime:(const CVTimeStamp*)outputTime
-{
-    // There is no autorelease pool when this method is called
-    // because it will be called from a background thread.
-    // It's important to create one or app can leak objects.
-    @autoreleasepool {
-        [self drawView];
-    }
-    return kCVReturnSuccess;
-}
-
-static CVReturn displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const CVTimeStamp* outputTime, CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext)
-{
-    CVReturn result = [(__bridge MetalView*)displayLinkContext getFrameForTime:outputTime];
-    return result;
 }
 
 - (void) drawView
 {
-    // TODO Implement this function.
+    id<CAMetalDrawable> drawable = self.currentDrawable;
+    id<MTLTexture> texture = drawable.texture;
+
+    MTLRenderPassDescriptor *passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
+    passDescriptor.colorAttachments[0].texture = texture;
+    passDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+    passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+    passDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 1.0, 0.0, 1.0);
+
+    id<MTLCommandQueue> commandQueue = [self.device newCommandQueue];
+    id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+    id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+    [commandEncoder endEncoding];
+
+    [commandBuffer presentDrawable:drawable];
+    [commandBuffer commit];
+
+    [commandQueue release];
 }
 
 - (void)dealloc
 {
-    CVDisplayLinkStop(displayLink);
-
-    CVDisplayLinkRelease(displayLink);
-
     [super dealloc];
 }
 
