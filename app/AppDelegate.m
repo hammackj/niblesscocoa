@@ -4,7 +4,6 @@
 
 - (id)init
 {
-
     if ( self = [super init] )
     {
         // create a reference rect
